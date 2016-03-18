@@ -464,6 +464,7 @@ module Omnibus
       regexp_ends = '.*(' + IGNORED_ENDINGS.map { |e| e.gsub(/\./, '\.') }.join('|') + ')$'
       regexp_patterns = IGNORED_PATTERNS.map { |e| '.*' + e.gsub(/\//, '\/') + '.*' }.join('|')
       regexp = regexp_ends + '|' + regexp_patterns
+      # dummy
 
       current_library = nil
       bad_libs = {}
