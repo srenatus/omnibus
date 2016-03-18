@@ -151,6 +151,16 @@ module Omnibus
       /libmd\.so/,
     ].freeze
 
+    IGNORED_ENDINGS = %w(
+    Gemfile LICENSE VERSION README Rakefile .[ch] .rdoc .js .json .gemspec .e*rb
+    .ri .lock .md .yml .txt .png .pm .[0-9] .py[oc]* .sh .toml .gitignore
+    .r*html .log out .pl .lua .h*h .sql .ttf .xml .mkd .java
+    ).freeze
+
+    IGNORED_PATTERNS = %w(
+    /terminfo/ /share/doc/ /share/postgresql/ /share/terminfo/
+    ).freeze
+
     class << self
       # @see (HealthCheck#new)
       def run!(project)
@@ -450,10 +460,15 @@ module Omnibus
     #   the bad libraries (library_name -> dependency_name -> satisfied_lib_path -> count)
     #
     def health_check_ldd
+      # anything that ends in one of these
+      regexp_ends = '.*(' + IGNORED_ENDINGS.map { |e| e.gsub(/\./, '\.') }.join('|') + ')$'
+      regexp_patterns = IGNORED_PATTERNS.map { |e| '.*' + e.gsub(/\//, '\/') + '.*' }.join('|')
+      regexp = regexp_ends + '|' + regexp_patterns
+
       current_library = nil
       bad_libs = {}
 
-      read_shared_libs("find #{project.install_dir}/ -type f | xargs ldd") do |line|
+      read_shared_libs("find #{project.install_dir}/ -type f -regextype posix-extended ! -regex #{regexp} | xargs ldd") do |line|
         case line
         when /^(.+):$/
           current_library = Regexp.last_match[1]
